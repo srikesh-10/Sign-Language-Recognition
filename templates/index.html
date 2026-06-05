@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="SignLang AI — Real-time sign language recognition powered by MediaPipe and Random Forest. Translate hand gestures into text instantly.">
+
+    <title>SignLang AI — Sign Language Recognition</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366F1'/><text y='72' x='50' text-anchor='middle' fill='white' font-size='56' font-family='Inter' font-weight='700'>S</text></svg>">
+</head>
+
+<body>
+    <div class="app-container" id="app">
+        <!-- ============================================================
+             Top Navigation
+             ============================================================ -->
+        <nav class="top-nav" role="navigation" aria-label="Main navigation">
+            <div class="nav-brand">
+                <div class="nav-logo" aria-hidden="true">S</div>
+                <span class="nav-title">SignLang AI</span>
+            </div>
+            <div class="nav-status is-connecting" id="navStatus" role="status" aria-live="polite">
+                <span class="nav-status-dot" aria-hidden="true"></span>
+                <span id="navStatusText">Connecting</span>
+            </div>
+        </nav>
+
+        <!-- ============================================================
+             Main Content Grid
+             ============================================================ -->
+        <main class="main-content" role="main">
+
+            <!-- --------------------------------------------------------
+                 Left Panel: Camera Feed
+                 -------------------------------------------------------- -->
+            <section class="panel panel-camera" aria-label="Camera feed">
+                <div class="panel-header">
+                    <span class="panel-title">Live Feed</span>
+                    <span class="label-caps" id="handStatusLabel">Waiting</span>
+                </div>
+
+                <div class="camera-container" id="cameraContainer">
+                    <img class="camera-feed" id="cameraFeed" src="{{ url_for('video_feed') }}"
+                        alt="Live webcam feed with hand tracking overlay" loading="eager">
+
+                    <!-- Overlays on top of the video -->
+                    <div class="camera-overlay">
+                        <div class="tracking-badge none" id="trackingBadge">
+                            <i class="fa-solid fa-hand" aria-hidden="true"></i>
+                            <span id="trackingText">NO HAND</span>
+                        </div>
+                        <div class="fps-badge" id="fpsBadge">
+                            <span id="fpsValue">0</span> FPS
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- --------------------------------------------------------
+                 Center Panel: Prediction
+                 -------------------------------------------------------- -->
+            <section class="panel panel-prediction" aria-label="Current prediction">
+                <div class="prediction-display">
+                    <span class="label-caps">Current Prediction</span>
+
+                    <div class="prediction-letter waiting" id="predictionLetter" aria-live="polite">
+                        Waiting…
+                    </div>
+
+                    <div class="confidence-bar-container">
+                        <div class="confidence-label-row">
+                            <span class="label-caps">Confidence</span>
+                            <span class="text-sm font-medium mono" id="confidenceValue">0%</span>
+                        </div>
+                        <div class="confidence-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0"
+                            aria-valuemax="100">
+                            <div class="confidence-fill" id="confidenceFill"></div>
+                        </div>
+                    </div>
+
+                    <div class="prediction-meta">
+                        <div class="meta-row">
+                            <span class="meta-label">Stability</span>
+                            <span class="meta-value none" id="stabilityValue">NONE</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">FPS</span>
+                            <span class="meta-value mono" id="fpsMetaValue">0</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">Status</span>
+                            <span class="meta-value" id="cameraStatusValue">LOADING</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- --------------------------------------------------------
+                 Right Panel: Session Statistics
+                 -------------------------------------------------------- -->
+            <section class="panel panel-stats" aria-label="Session statistics">
+                <div class="panel-header">
+                    <span class="panel-title">Session</span>
+                    <span class="label-caps" id="durationLabel">00:00</span>
+                </div>
+
+                <div class="stat-list">
+                    <div class="stat-item">
+                        <div class="stat-item-left">
+                            <div class="stat-icon primary">
+                                <i class="fa-solid fa-keyboard" aria-hidden="true"></i>
+                            </div>
+                            <span class="stat-name">Accepted</span>
+                        </div>
+                        <span class="stat-value" id="acceptedCount">0</span>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-item-left">
+                            <div class="stat-icon success">
+                                <i class="fa-solid fa-signal" aria-hidden="true"></i>
+                            </div>
+                            <span class="stat-name">Detection</span>
+                        </div>
+                        <span class="quality-pill na" id="detectionQuality">N/A</span>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-item-left">
+                            <div class="stat-icon warning">
+                                <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
+                            </div>
+                            <span class="stat-name">Avg. Confidence</span>
+                        </div>
+                        <span class="stat-value mono" id="avgConfidence">0%</span>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-item-left">
+                            <div class="stat-icon info">
+                                <i class="fa-solid fa-video" aria-hidden="true"></i>
+                            </div>
+                            <span class="stat-name">Feed</span>
+                        </div>
+                        <span class="stat-value" id="feedStatus">—</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- --------------------------------------------------------
+                 Bottom Section: Sentence Builder
+                 -------------------------------------------------------- -->
+            <section class="panel panel-sentence" aria-label="Sentence builder">
+                <div class="sentence-display" id="sentenceDisplay">
+                    <span class="sentence-placeholder" id="sentencePlaceholder">Your translated sentence will appear here</span>
+                    <span class="sentence-text" id="sentenceText"></span>
+                    <span class="sentence-cursor" aria-hidden="true"></span>
+                </div>
+
+                <div class="sentence-actions">
+                    <button class="btn btn-append" id="btnAppend" title="Append prediction (Space)"
+                        aria-label="Append predicted character">
+                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                        Add
+                        <span class="kbd">Space</span>
+                    </button>
+
+                    <button class="btn" id="btnSpace" title="Add space" aria-label="Add space">
+                        <i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i>
+                    </button>
+
+                    <button class="btn" id="btnDelete" title="Delete last character (Backspace)"
+                        aria-label="Delete last character">
+                        <i class="fa-solid fa-delete-left" aria-hidden="true"></i>
+                        <span class="kbd">⌫</span>
+                    </button>
+
+                    <button class="btn btn-danger" id="btnClear" title="Clear sentence (C)" aria-label="Clear sentence">
+                        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                        Clear
+                    </button>
+
+                    <button class="btn btn-speak" id="btnSpeak" title="Speak sentence (Enter)"
+                        aria-label="Speak sentence">
+                        <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+                        Speak
+                        <span class="kbd">↵</span>
+                    </button>
+
+                    <button class="btn btn-success" id="btnSave" title="Save sentence (S)" aria-label="Save sentence">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                        Save
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <!-- App Script -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>

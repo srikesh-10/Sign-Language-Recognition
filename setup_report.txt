@@ -1,0 +1,22 @@
+============================================================
+           SIGN LANGUAGE RECOGNITION SETUP REPORT
+============================================================
+Generated on: 2026-06-03 10:22:50
+Operating System: win32
+------------------------------------------------------------
+1. Python Environment:
+   - Installed Version: 3.11.9
+   - Status: [PASS] - Success: Exact match.
+------------------------------------------------------------
+2. Required Libraries:
+   - cv2         : 4.13.0       [PASS] - Imported successfully
+   - mediapipe   : 0.10.35      [PASS] - Imported successfully
+   - numpy       : 2.4.6        [PASS] - Imported successfully
+------------------------------------------------------------
+3. Hardware / Webcam Check:
+   - Webcam Status: [PASS]
+   - Detail: Webcam active (Resolution: 640x480)
+------------------------------------------------------------
+OVERALL SYSTEM STATUS:
+>>> READY! Environment is fully configured for Sign Language Recognition.
+============================================================
