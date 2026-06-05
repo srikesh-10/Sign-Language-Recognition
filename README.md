@@ -90,3 +90,7 @@ python mediapipe_hand_test.py
     *   On Windows, check **Settings > Privacy & security > Camera** to ensure apps are allowed to access your camera.
 *   **MediaPipe issues on Python 3.12+:**
     *   This project is strictly configured and tested for **Python 3.11.9** to prevent version compatibility issues with MediaPipe.
+ 
+## Author
+
+*  P.Srikesh
